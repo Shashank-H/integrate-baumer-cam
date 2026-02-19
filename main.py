@@ -2,100 +2,137 @@ import os
 import io
 import time
 import requests
-import neoapi
-import numpy as np
 from PIL import Image
 from dotenv import load_dotenv
+
+# Import our modular sources
+from source_baumer import BaumerSource
+from source_rtsp import RTSPSource
 
 # Load environment variables
 load_dotenv()
 
+# API and Auth
 API_URL = os.getenv("API_URL")
-IMAGE_FIELD_NAME = os.getenv("IMAGE_FIELD_NAME", "file")
-IMAGES_SAVE_PATH = os.getenv("IMAGES_SAVE_PATH", "./images")
+API_KEY = os.getenv("API_KEY")
+WORKSPACE_ID = os.getenv("WORKSPACE_ID")
 
-def capture_and_send(camera):
+# Form Fields
+IMAGE_FIELD_NAME = os.getenv("IMAGE_FIELD_NAME", "image_file")
+PRODUCT_NAME = os.getenv("PRODUCT_NAME")
+SESSION_NAME = os.getenv("SESSION_NAME")
+ARTICLE_NAME = os.getenv("ARTICLE_NAME")
+NEXT_ARTICLE = os.getenv("NEXT_ARTICLE", "false")
+
+# App Config
+IMAGES_SAVE_PATH = os.getenv("IMAGES_SAVE_PATH", "./images")
+SOURCE_TYPE = os.getenv("SOURCE_TYPE", "baumer").lower()  # 'baumer' or 'rtsp'
+RTSP_URL = os.getenv("RTSP_URL")
+
+def capture_and_process(source):
     try:
         print("Capturing image...")
-        # Get image from camera
-        img = camera.GetImage()
-        if img.IsEmpty():
+        pil_img = source.get_image()
+        
+        if pil_img is None:
             print("Captured image is empty.")
             return
 
-        # Convert to RGB8 to ensure consistent format for Pillow
-        rgb_img = img.Convert("RGB8")
-        img_array = rgb_img.GetNPArray()
-        
-        # Convert numpy array to PIL Image
-        pil_img = Image.fromarray(img_array, mode='RGB')
-
-        # Always prepare the WebP buffer for high quality
+        # Prepare WebP data (High quality lossless)
         buffer = io.BytesIO()
         pil_img.save(buffer, format="WEBP", quality=100, lossless=True)
         image_data = buffer.getvalue()
 
-        # Generate a timestamped filename for local saving
+        # Generate filename
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         filename = f"capture_{timestamp}.webp"
         
-        # Ensure save directory exists
+        # Local Save
         os.makedirs(IMAGES_SAVE_PATH, exist_ok=True)
         local_path = os.path.join(IMAGES_SAVE_PATH, filename)
-
-        # Save locally by default
         with open(local_path, "wb") as f:
             f.write(image_data)
-        print(f"Image saved locally to: {local_path}")
+        print(f"Image saved locally: {local_path}")
 
-        # If API_URL is provided, also send it
+        # API Upload
         if API_URL:
-            print(f"Sending image to {API_URL}...")
+            print(f"Uploading to {API_URL}...")
+            
+            # Headers
+            headers = {
+                "x-api-key": API_KEY,
+                "x-workspace-id": WORKSPACE_ID
+            }
+            
+            # Form Data
+            data = {
+                "product_name": PRODUCT_NAME,
+                "session_name": SESSION_NAME,
+                "article_name": ARTICLE_NAME,
+                "next_article": NEXT_ARTICLE
+            }
+            
+            # Files
             files = {IMAGE_FIELD_NAME: (filename, image_data, "image/webp")}
+            
             try:
-                response = requests.post(API_URL, files=files, timeout=30)
-                if 200 <= response.status_code < 300:
-                    print(f"Successfully sent image. Response: {response.status_code}")
+                response = requests.post(
+                    API_URL, 
+                    headers=headers, 
+                    data=data, 
+                    files=files, 
+                    timeout=30
+                )
+                print(f"API Response: {response.status_code}")
+                if response.status_code >= 400:
+                    print(f"Error Details: {response.text}")
                 else:
-                    print(f"Failed to send image. Status code: {response.status_code}")
-                    print(f"Response: {response.text}")
-            except Exception as api_err:
-                print(f"API call failed: {api_err}")
+                    # Optional: print some success info if the API returns JSON
+                    try:
+                        print(f"Success: {response.json()}")
+                    except:
+                        pass
+            except Exception as e:
+                print(f"API Upload failed: {e}")
         else:
-            print("No API_URL configured, skipping upload.")
+            print("No API_URL, skipping upload.")
 
     except Exception as e:
-        print(f"Error during capture process: {e}")
+        print(f"Processing error: {e}")
 
 def main():
-    camera = None
+    source = None
     try:
-        print("Connecting to camera...")
-        camera = neoapi.Cam()
-        camera.Connect()
-        print(f"Connected to: {camera.f.DeviceModelName.Get()} ({camera.f.DeviceSerialNumber.Get()})")
+        if SOURCE_TYPE == "rtsp":
+            if not RTSP_URL:
+                print("Error: RTSP_URL must be set when SOURCE_TYPE is 'rtsp'")
+                return
+            source = RTSPSource(RTSP_URL)
+        else:
+            source = BaumerSource()
 
-        print("\nReady.")
+        source.connect()
+
+        print(f"\nSource initialized: {SOURCE_TYPE.upper()}")
+        print("Ready.")
         while True:
-            user_input = input("Enter 'c' to capture, 'x' to exit: ").strip().lower()
-            if user_input == 'c':
-                capture_and_send(camera)
-            elif user_input == 'x':
-                print("Exiting...")
+            cmd = input("Enter 'c' to capture, 'x' to exit: ").strip().lower()
+            if cmd == 'c':
+                capture_process_start = time.time()
+                capture_and_process(source)
+                print(f"Cycle time: {time.time() - capture_process_start:.2f}s")
+            elif cmd == 'x':
                 break
-            elif user_input == '':
+            elif cmd == '':
                 continue
             else:
-                print(f"Unknown command: '{user_input}'")
+                print(f"Unknown command: '{cmd}'")
 
-    except neoapi.NeoException as e:
-        print(f"NeoAPI Error: {e}")
     except Exception as e:
-        print(f"Unexpected Error: {e}")
+        print(f"Main Loop Error: {e}")
     finally:
-        if camera and camera.IsConnected():
-            print("Disconnecting camera...")
-            camera.Disconnect()
+        if source:
+            source.disconnect()
 
 if __name__ == "__main__":
     main()

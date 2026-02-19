@@ -7,6 +7,7 @@ requires-python = ">=3.10"
 dependencies = [
     "baumer-neoapi",
     "numpy>=2.2.6",
+    "opencv-python-headless>=4.13.0.92",
     "pillow>=12.1.1",
     "python-dotenv>=1.2.1",
     "requests>=2.32.5",
