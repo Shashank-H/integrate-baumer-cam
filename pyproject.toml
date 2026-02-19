@@ -1,0 +1,16 @@
+[project]
+name = "integrate-baumer-cam"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "baumer-neoapi",
+    "numpy>=2.2.6",
+    "pillow>=12.1.1",
+    "python-dotenv>=1.2.1",
+    "requests>=2.32.5",
+]
+
+[tool.uv.sources]
+baumer-neoapi = { path = "libs/baumer_neoapi-1.5.0-py3-none-any.whl" }
