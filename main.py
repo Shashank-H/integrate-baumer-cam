@@ -6,7 +6,6 @@ from PIL import Image
 from dotenv import load_dotenv
 
 # Import our modular sources
-from source_baumer import BaumerSource
 from source_rtsp import RTSPSource
 
 # Load environment variables
@@ -109,6 +108,7 @@ def main():
                 return
             source = RTSPSource(RTSP_URL)
         else:
+            from source_baumer import BaumerSource
             source = BaumerSource()
 
         source.connect()
