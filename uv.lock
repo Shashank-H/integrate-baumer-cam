@@ -9,9 +9,9 @@ resolution-markers = [
 [[package]]
 name = "baumer-neoapi"
 version = "1.5.0"
-source = { path = "libs/baumer_neoapi-1.5.0-py3-none-any.whl" }
+source = { path = "libs/baumer_neoapi-1.5.0-cp34.cp35.cp36.cp37.cp38.cp39.cp310.cp311.cp312-none-win_amd64.whl" }
 wheels = [
-    { filename = "baumer_neoapi-1.5.0-py3-none-any.whl", hash = "sha256:ed16595f087694014ea16358b8d2ad7fe608db7608b22dc320db7dc01ae9deeb" },
+    { filename = "baumer_neoapi-1.5.0-cp34.cp35.cp36.cp37.cp38.cp39.cp310.cp311.cp312-none-win_amd64.whl", hash = "sha256:fcd0abc046dd6d0fa20680d8958768cc964a36a8b9965aa308123e8d9b42f2c8" },
 ]
 
 [[package]]
@@ -137,7 +137,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "baumer-neoapi", path = "libs/baumer_neoapi-1.5.0-py3-none-any.whl" },
+    { name = "baumer-neoapi", path = "libs/baumer_neoapi-1.5.0-cp34.cp35.cp36.cp37.cp38.cp39.cp310.cp311.cp312-none-win_amd64.whl" },
     { name = "numpy", specifier = ">=2.2.6" },
     { name = "opencv-python-headless", specifier = ">=4.13.0.92" },
     { name = "pillow", specifier = ">=12.1.1" },

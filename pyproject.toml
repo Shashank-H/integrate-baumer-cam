@@ -14,4 +14,4 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-baumer-neoapi = { path = "libs/baumer_neoapi-1.5.0-py3-none-any.whl" }
+baumer-neoapi = { path = "libs/baumer_neoapi-1.5.0-cp34.cp35.cp36.cp37.cp38.cp39.cp310.cp311.cp312-none-win_amd64.whl" }
