@@ -9,6 +9,8 @@ wheels/
 # Virtual environments
 .venv
 images/
+images_old/
 
 # Environment variables
 .env
+
